@@ -1,0 +1,31 @@
+# General parameters
+digits = 128    # number of digits
+gaver_order = 8 # order of the Gaver sequence
+
+ln_type = "Loading" # LN type ('Loading' or 'Tidal')
+
+min_degree = 2   # Minimum degree
+max_degree = 500 # Maximum degree
+degree_step = 2  # Step
+
+time_scale = "log"   # Time scale ('log' / 'lin' / 'ext')
+time_points = 3      # Time points (minus one)
+time_range = [-2, 1] # Time range (10^(m1:m2) kyrs)
+
+# Load time history
+load_function = "step" # Load function ('step' / 'ramp')
+ramp_length = 1.0      # Ramp length (kyrs)
+
+# Rheological model
+num_layers = 6 # Number of layers
+
+models = ["MODELS/VM5a.dat"]
+
+# Log file
+log_file = "alma.log"
+
+# Output files
+ln_type_output = "Real"   # 'Real' or 'Complex' LNs
+output_format = "ln_vs_n" # Output file format (LNs vs t or LNs vs n)
+
+output_files = ["h_EarthLLN.dat", "l_EarthLLN.dat", "k_EarthLLN.dat"]
