@@ -1,5 +1,9 @@
 pub mod config;
 pub mod constants;
 pub mod core;
+pub mod io;
 pub mod matrix;
+pub mod messages;
 pub mod model;
+pub mod types;
+pub mod utils;
