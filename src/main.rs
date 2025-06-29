@@ -1,19 +1,46 @@
-use rug::{Assign, Integer};
+use std::env;
+use std::fs;
 
-fn main() {
-    let mut int = Integer::new();
-    assert_eq!(int, 0);
-    int.assign(14);
-    assert_eq!(int, 14);
+use anyhow::Result;
+use anyhow::anyhow;
 
-    let decimal = "98_765_432_109_876_543_210";
-    int.assign(Integer::parse(decimal).unwrap());
-    assert!(int > 100_000_000);
+use lovers::config::Config;
+use lovers::io::read_model;
+use lovers::messages;
 
-    let hex_160 = "ffff0000ffff0000ffff0000ffff0000ffff0000";
-    int.assign(Integer::parse_radix(hex_160, 16).unwrap());
-    assert_eq!(int.significant_bits(), 160);
-    int = (int >> 128) - 1;
-    assert_eq!(int, 0xfffe_ffff_u32);
-    println!("Hello, world!");
+fn main() -> Result<()> {
+    messages::display_logo();
+    messages::display_lovers();
+
+    // Collect command line arguments
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    // Ensure that the user has provided a path to a TOML file
+    if args.len() != 1 {
+        eprintln!("Usage: lovers <path_to_config>");
+        return Ok(());
+    }
+
+    // Try to get the absolute path and handle errors properly
+    let path = match fs::canonicalize(&args[0]) {
+        Ok(p) => p, // Successfully resolved to an absolute path
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
+
+    // Ensure the path exists after resolving it
+    if !path.exists() {
+        eprintln!("Config file does not exist");
+        return Ok(());
+    }
+
+    let config = Config::load(
+        path.to_str()
+            .ok_or_else(|| anyhow!("Error: The canonicalized path is not valid UTF-8."))?,
+    )?;
+
+    read_model(config.models[0].as_str())?;
+
+    Ok(())
 }
