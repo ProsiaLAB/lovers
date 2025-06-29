@@ -1,8 +1,8 @@
 # General parameters
-digits = 128    # number of digits
-gaver_order = 8 # order of the Gaver sequence
+precision = 128 # number of digits
+order = 8       # order of the Gaver sequence
 
-ln_type = "Loading" # LN type ('Loading' or 'Tidal')
+kind = "loading" # LN type ('Loading' or 'Tidal')
 
 min_degree = 2   # Minimum degree
 max_degree = 500 # Maximum degree
@@ -25,7 +25,7 @@ models = ["MODELS/VM5a.dat"]
 log_file = "alma.log"
 
 # Output files
-ln_type_output = "Real"   # 'Real' or 'Complex' LNs
-output_format = "ln_vs_n" # Output file format (LNs vs t or LNs vs n)
+output_type = "real"     # 'Real' or 'Complex' LNs
+output_format = "degree" # Output file format (LNs vs t or LNs vs n)
 
 output_files = ["h_EarthLLN.dat", "l_EarthLLN.dat", "k_EarthLLN.dat"]
