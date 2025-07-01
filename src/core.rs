@@ -121,7 +121,7 @@ impl Model {
     }
 
     pub fn normalize(&mut self, precision: Precision) {
-        let r0 = self.radii[self.nlayers];
+        let r0 = self.radii[self.nlayers].owned();
         let rho0 = self
             .densities
             .iter()
@@ -138,13 +138,13 @@ impl Model {
             * Real::from_f64(365.25, precision.to_bits())
             * Real::from_f64(24.0, precision.to_bits())
             * Real::from_f64(3600.0, precision.to_bits());
-        let eta0 = mu0 * t0;
-        let mass0 = rho0 * r0.pow_u32(3, precision.to_bits());
+        let eta0 = mu0.owned() * t0.owned();
+        let mass0 = rho0.owned() * r0.pow_u32(3, precision.to_bits());
 
-        self.radii = self.radii.iter().map(|r| r / r0).collect();
-        self.densities = self.densities.iter().map(|d| d / rho0).collect();
-        self.rigidities = self.rigidities.iter().map(|r| r / mu0).collect();
-        self.viscosities = self.viscosities.iter().map(|v| v / eta0).collect();
+        self.radii = self.radii.iter().map(|r| r / r0.owned()).collect();
+        self.densities = self.densities.iter().map(|d| d / rho0.owned()).collect();
+        self.rigidities = self.rigidities.iter().map(|r| r / mu0.owned()).collect();
+        self.viscosities = self.viscosities.iter().map(|v| v / eta0.owned()).collect();
 
         let grav_normalized = Real::from_f64(GRAVITATIONAL_CONSTANT, precision.to_bits())
             * rho0.pow_u32(2, precision.to_bits())
@@ -154,8 +154,7 @@ impl Model {
             .gravity
             .iter()
             .map(|g| {
-                g * r0.pow_u32(2, precision.to_bits())
-                    * (grav_normalized / Real::from_f64(mass0, precision.to_bits()))
+                g * r0.pow_u32(2, precision.to_bits()) * (grav_normalized.owned() / mass0.owned())
             })
             .collect();
     }
