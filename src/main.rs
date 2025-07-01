@@ -40,7 +40,7 @@ fn main() -> Result<()> {
             .ok_or_else(|| anyhow!("Error: The canonicalized path is not valid UTF-8."))?,
     )?;
 
-    read_model(config.models[0].as_str())?;
+    read_model(config.models[0].as_str(), config.precision)?;
 
     Ok(())
 }

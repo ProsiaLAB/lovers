@@ -1,105 +1,3 @@
-mod combinatorics {
-    use crate::types::Integer;
-    use rug::Complete;
-    pub trait Factorial {
-        fn factorial(self) -> Self;
-    }
-
-    impl Factorial for i64 {
-        fn factorial(self) -> Self {
-            (1..=self).product()
-        }
-    }
-
-    impl Factorial for rug::Integer {
-        fn factorial(self) -> Self {
-            let mut result = rug::Integer::from(1);
-            let mut i = rug::Integer::from(2);
-            while i <= self {
-                result *= &i;
-                i += 1;
-            }
-            result
-        }
-    }
-
-    pub trait Combinations {
-        fn combinations(self, k: Self) -> Self;
-    }
-
-    impl Combinations for i64 {
-        fn combinations(self, k: Self) -> Self {
-            if k > self {
-                0
-            } else {
-                (1..=k).fold(1, |acc, val| acc * (self - val + 1) / val)
-            }
-        }
-    }
-
-    impl Combinations for rug::Integer {
-        fn combinations(self, k: Self) -> Self {
-            if k > self {
-                return Integer::from(0);
-            }
-
-            let mut acc = Integer::from(1);
-            let mut val = Integer::from(1);
-
-            while val <= k {
-                // Complete subtraction before adding
-                let num = (&self - &val).complete() + 1;
-                acc *= num;
-                acc /= &val;
-                val += 1;
-            }
-
-            acc
-        }
-    }
-
-    pub trait Binomial {
-        fn binomial(self, k: Self) -> Self;
-    }
-
-    impl Binomial for i64 {
-        fn binomial(self, k: Self) -> Self {
-            self.combinations(k)
-        }
-    }
-
-    impl Binomial for rug::Integer {
-        fn binomial(self, k: Self) -> Self {
-            self.combinations(k)
-        }
-    }
-
-    pub trait Permutations {
-        fn permutations(self, k: Self) -> Self;
-    }
-    impl Permutations for i64 {
-        fn permutations(self, k: Self) -> Self {
-            (self - k + 1..=self).product()
-        }
-    }
-    impl Permutations for rug::Integer {
-        fn permutations(self, k: Self) -> Self {
-            if k > self {
-                return Integer::from(0);
-            }
-
-            let mut result = Integer::from(1);
-            let mut i = (&self - &k).complete() + 1;
-
-            while i <= self {
-                result *= &i;
-                i += 1;
-            }
-
-            result
-        }
-    }
-}
 pub mod constants {
     //! Defines mathematical expressions commonly used when computing distribution
     //! values as constants
@@ -161,8 +59,6 @@ pub mod gamma {
     use anyhow::Result;
     use anyhow::anyhow;
     use approx::ulps_eq;
-
-    use crate::types::Real;
 
     use super::constants::{DEFAULT_F64_ACC, LN_2_SQRT_E_OVER_PI, LN_PI, TWO_SQRT_E_OVER_PI};
     use super::special::almost_eq;
@@ -568,23 +464,5 @@ pub mod gamma {
     // method
     fn signum(x: f64) -> f64 {
         if x == 0.0 { 0.0 } else { x.signum() }
-    }
-
-    trait GammaFn {
-        fn gamma(&self) -> Self;
-    }
-
-    #[cfg(not(feature = "high_precision"))]
-    impl GammaFn for f64 {
-        fn gamma(&self) -> Self {
-            gamma(*self)
-        }
-    }
-
-    #[cfg(feature = "high_precision")]
-    impl GammaFn for Real {
-        fn gamma(&self) -> Self {
-            self.clone().gamma()
-        }
     }
 }

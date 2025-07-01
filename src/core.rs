@@ -31,7 +31,7 @@ impl FromStr for Rheology {
             "kelvin" => Ok(Rheology::Kelvin),
             "burgers" => Ok(Rheology::Burgers),
             "andrade" => Ok(Rheology::Andrade),
-            _ => Err(anyhow!("Invalid rheology string: '{}'", s)), // If no match, return an error
+            _ => Err(anyhow!("Invalid rheology: '{}'", s)), // If no match, return an error
         }
     }
 }

@@ -3,12 +3,14 @@ use std::fs;
 use anyhow::Result;
 use serde::Deserialize;
 
+use crate::numeric::Precision;
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     /// Order of the Gaver sequence
     pub order: usize,
-    /// Number of digits
-    pub precision: usize,
+    /// Number of digits of precision
+    pub precision: Precision,
     /// Love number kind
     pub kind: Kind,
     /// Minimum degree
