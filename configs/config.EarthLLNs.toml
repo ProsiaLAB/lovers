@@ -1,6 +1,6 @@
 # General parameters
-precision = 128 # number of digits
-order = 8       # order of the Gaver sequence
+precision = { Digits = 128 } # number of digits
+order = 8                    # order of the Gaver sequence
 
 kind = "loading" # LN type ('Loading' or 'Tidal')
 
