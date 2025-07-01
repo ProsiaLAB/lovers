@@ -5,7 +5,7 @@ use anyhow::Result;
 use anyhow::anyhow;
 
 use lovers::config::Config;
-use lovers::io::read_model;
+use lovers::core::Model;
 use lovers::messages;
 
 fn main() -> Result<()> {
@@ -40,7 +40,10 @@ fn main() -> Result<()> {
             .ok_or_else(|| anyhow!("Error: The canonicalized path is not valid UTF-8."))?,
     )?;
 
-    read_model(config.models[0].as_str(), config.precision)?;
+    let mut model = Model::load(config.models[0].as_str(), config.precision)?;
+    model.normalize(config.precision);
+
+    dbg!(&model);
 
     Ok(())
 }
