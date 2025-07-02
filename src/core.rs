@@ -9,11 +9,14 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use anyhow::{Error, Result};
 
+use crate::config::Config;
+use crate::config::TimeScale;
 use crate::constants::GRAVITATIONAL_CONSTANT;
 use crate::numeric::Precision;
 use crate::numeric::Real;
+use crate::numeric::combinatorics::{Combinations, Factorial};
 use crate::numeric::special::GammaFn;
-use crate::numeric::traits::{FromFloat, Owned, ParseNumeric, Pow};
+use crate::numeric::traits::{FromFloat, Owned, ParseNumeric, PowI32, PowReal};
 
 #[derive(Debug)]
 pub struct Model {
@@ -90,7 +93,7 @@ impl Model {
                     panic!("Expected window of exactly 2 elements");
                 };
                 rho.owned()
-                    * (r1.pow_u32(3, precision.to_bits()) - r2.pow_u32(3, precision.to_bits()))
+                    * (r1.pow_i32(3, precision.to_bits()) - r2.pow_i32(3, precision.to_bits()))
             })
             .map(|m| m * coeff.owned())
             .fold(zero, |acc, x| acc + x);
@@ -104,7 +107,7 @@ impl Model {
                     Real::from_f64(0.0, precision.to_bits())
                 } else {
                     Real::from_f64(GRAVITATIONAL_CONSTANT, precision.to_bits()) * mass.owned()
-                        / r.pow_u32(2, precision.to_bits())
+                        / r.pow_i32(2, precision.to_bits())
                 }
             })
             .collect();
@@ -139,7 +142,7 @@ impl Model {
             * Real::from_f64(24.0, precision.to_bits())
             * Real::from_f64(3600.0, precision.to_bits());
         let eta0 = mu0.owned() * t0.owned();
-        let mass0 = rho0.owned() * r0.pow_u32(3, precision.to_bits());
+        let mass0 = rho0.owned() * r0.pow_i32(3, precision.to_bits());
 
         self.radii = self.radii.iter().map(|r| r / r0.owned()).collect();
         self.densities = self.densities.iter().map(|d| d / rho0.owned()).collect();
@@ -147,14 +150,14 @@ impl Model {
         self.viscosities = self.viscosities.iter().map(|v| v / eta0.owned()).collect();
 
         let grav_normalized = Real::from_f64(GRAVITATIONAL_CONSTANT, precision.to_bits())
-            * rho0.pow_u32(2, precision.to_bits())
-            * r0.pow_u32(2, precision.to_bits())
+            * rho0.pow_i32(2, precision.to_bits())
+            * r0.pow_i32(2, precision.to_bits())
             / mu0;
         self.gravity = self
             .gravity
             .iter()
             .map(|g| {
-                g * r0.pow_u32(2, precision.to_bits()) * (grav_normalized.owned() / mass0.owned())
+                g * r0.pow_i32(2, precision.to_bits()) * (grav_normalized.owned() / mass0.owned())
             })
             .collect();
     }
@@ -211,4 +214,85 @@ impl fmt::Display for Rheology {
     }
 }
 
-pub fn get_salzer_weights() {}
+pub fn get_time_steps(config: &Config) -> Result<Vec<Real>> {
+    match config.time_scale {
+        TimeScale::Linear => {
+            let m1 = config.time_range.0;
+            let m2 = config.time_range.1;
+            let t1 = Real::from_f64(10.0, config.precision.to_bits())
+                .pow_i32(m1, config.precision.to_bits());
+            let t2 = Real::from_f64(10.0, config.precision.to_bits())
+                .pow_i32(m2, config.precision.to_bits());
+            if config.time_points == 0 {
+                Ok(vec![t1])
+            } else {
+                let dt = (t2 - t1.owned())
+                    / Real::from_f64(config.time_points as f64, config.precision.to_bits());
+                Ok((0..config.time_points + 1)
+                    .map(|i| {
+                        t1.owned()
+                            + dt.owned()
+                                * (Real::from_f64(i as f64, config.precision.to_bits())
+                                    - Real::from_f64(1.0, config.precision.to_bits()))
+                    })
+                    .collect::<Vec<Real>>())
+            }
+        }
+        TimeScale::Log => {
+            let a1 = Real::from_f64(config.time_range.0.into(), config.precision.to_bits());
+            let a2 = Real::from_f64(config.time_range.1.into(), config.precision.to_bits());
+            if config.time_points == 0 {
+                let t1 = Real::from_f64(10.0, config.precision.to_bits()).pow_real(a1);
+                Ok(vec![t1])
+            } else {
+                let da = (a2 - a1.owned())
+                    / Real::from_f64(config.time_points as f64, config.precision.to_bits());
+                Ok((0..config.time_points + 1)
+                    .map(|i| {
+                        a1.owned()
+                            + da.owned()
+                                * (Real::from_f64(i as f64, config.precision.to_bits())
+                                    - Real::from_f64(1.0, config.precision.to_bits()))
+                    })
+                    .map(|a| Real::from_f64(10.0, config.precision.to_bits()).pow_real(a))
+                    .collect::<Vec<Real>>())
+            }
+        }
+        TimeScale::External => {
+            let path = Path::new("time_steps.dat");
+            let file = File::open(path)?;
+            let reader = BufReader::new(file);
+
+            let mut time_steps = Vec::new();
+            for line in reader.lines() {
+                let line = line?;
+                let time_step: Real = ParseNumeric::parse(line.trim(), Some(config.precision))?;
+                time_steps.push(time_step);
+            }
+
+            Ok(time_steps)
+        }
+    }
+}
+
+pub fn get_salzer_weights(order: u32, precision: Precision) -> Vec<Real> {
+    let m = order;
+    let mut zeta = Vec::new();
+    for k in 0..(2 * m) {
+        let j1 = ((k as f64 + 1.0) / 2.0).floor() as u32;
+        let j2 = k.min(m);
+        zeta.push(Real::from_f64(0.0, precision.to_bits()));
+        for j in j1..j2 {
+            let fattm = m.factorial();
+            let q1 = m.combinations(j);
+            let q2 = (2 * j).combinations(j);
+            let q3 = j.combinations(k - j);
+            zeta[k as usize] +=
+                (j as f64).powf(m as f64 + 1.0) / fattm as f64 * q1 as f64 * q2 as f64 * q3 as f64;
+            if k % 2 != 0 {
+                zeta[k as usize] = -zeta[k as usize].owned();
+            }
+        }
+    }
+    zeta
+}
