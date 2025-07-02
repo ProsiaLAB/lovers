@@ -32,22 +32,60 @@ impl FromFloat for f64 {
     }
 }
 
-pub trait Pow {
-    fn pow_u32(&self, exp: u32, prec: u32) -> Self;
+pub trait PowI32 {
+    fn pow_i32(&self, exp: i32, prec: u32) -> Self;
 }
 
 #[cfg(not(feature = "high_precision"))]
-impl Pow for f64 {
-    fn pow_u32(&self, exp: u32, _: u32) -> Self {
-        self.powi(exp as i32)
+impl PowI32 for f64 {
+    fn pow_i32(&self, exp: i32, _: u32) -> Self {
+        self.powi(exp)
     }
 }
 
 #[cfg(feature = "high_precision")]
-impl Pow for rug::Float {
-    fn pow_u32(&self, exp: u32, prec: u32) -> Self {
+impl PowI32 for rug::Float {
+    fn pow_i32(&self, exp: i32, prec: u32) -> Self {
         use rug::ops::CompleteRound;
 
         self.pow(exp).complete(prec)
+    }
+}
+
+pub trait PowReal<Rhs = Self> {
+    fn pow_real(&self, exp: Rhs) -> Self;
+}
+
+#[cfg(not(feature = "high_precision"))]
+impl PowReal for f64 {
+    fn pow_real(&self, exp: f64) -> Self {
+        self.powf(exp)
+    }
+}
+
+#[cfg(feature = "high_precision")]
+impl PowReal for rug::Float {
+    fn pow_real(&self, exp: rug::Float) -> Self {
+        use rug::ops::Pow;
+
+        self.clone().pow(exp)
+    }
+}
+
+pub trait Floor {
+    fn floor(&self) -> Self;
+}
+
+#[cfg(not(feature = "high_precision"))]
+impl Floor for f64 {
+    fn floor(&self) -> Self {
+        f64::floor(*self)
+    }
+}
+
+#[cfg(feature = "high_precision")]
+impl Floor for rug::Float {
+    fn floor(&self) -> Self {
+        self.clone().round()
     }
 }
