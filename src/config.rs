@@ -8,7 +8,7 @@ use crate::numeric::Precision;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     /// Order of the Gaver sequence
-    pub order: usize,
+    pub order: u32,
     /// Number of digits of precision
     pub precision: Precision,
     /// Love number kind
@@ -24,7 +24,7 @@ pub struct Config {
     /// Time points (minus one)
     pub time_points: usize,
     /// Time range
-    pub time_range: (f64, f64),
+    pub time_range: (i32, i32),
     /// Load function
     pub load_function: LoadFunction,
     /// Ramp length
