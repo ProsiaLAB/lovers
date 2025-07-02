@@ -6,6 +6,8 @@ use anyhow::anyhow;
 
 use lovers::config::Config;
 use lovers::core::Model;
+use lovers::core::get_salzer_weights;
+use lovers::core::get_time_steps;
 use lovers::messages;
 
 fn main() -> Result<()> {
@@ -42,6 +44,8 @@ fn main() -> Result<()> {
 
     let mut model = Model::load(config.models[0].as_str(), config.precision)?;
     model.normalize(config.precision);
+    let _time_steps = get_time_steps(&config)?;
+    let _zeta = get_salzer_weights(config.order, config.precision);
 
     dbg!(&model);
 
