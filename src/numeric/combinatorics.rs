@@ -9,7 +9,7 @@ pub trait Factorial {
     fn factorial(self) -> Self;
 }
 
-impl Factorial for i64 {
+impl Factorial for u32 {
     fn factorial(self) -> Self {
         (1..=self).product()
     }
@@ -32,7 +32,7 @@ pub trait Combinations {
     fn combinations(self, k: Self) -> Self;
 }
 
-impl Combinations for i64 {
+impl Combinations for u32 {
     fn combinations(self, k: Self) -> Self {
         if k > self {
             0
@@ -68,7 +68,7 @@ pub trait Binomial {
     fn binomial(self, k: Self) -> Self;
 }
 
-impl Binomial for i64 {
+impl Binomial for u32 {
     fn binomial(self, k: Self) -> Self {
         self.combinations(k)
     }
